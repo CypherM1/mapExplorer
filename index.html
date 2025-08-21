@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Map Explorer</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <!-- Header: title left, dark-mode toggle right -->
+  <header>
+    <h1>Map Explorer</h1>
+    <button id="modeToggle" class="mode-toggle" aria-label="Toggle dark mode">🌗</button>
+  </header>
+
+  <!-- Search bar -->
+  <section class="search-container">
+    <form id="searchForm" autocomplete="off">
+      <input
+        id="locationInput"
+        type="text"
+        placeholder="Search a place (e.g., Golden Gate Bridge)"
+        aria-label="Location search"
+      />
+      <button id="searchBtn" type="submit" class="search-btn">Search</button>
+    </form>
+  </section>
+
+  <!-- Main content: history + map -->
+  <main class="main-content">
+    <aside class="history-panel" aria-label="Search history">
+      <div class="history-header">
+        <h2>History</h2>
+        <button id="clearHistoryBtn" class="clear-history" type="button" aria-label="Clear history">Clear</button>
+      </div>
+      <ul id="historyList" class="history-list" role="list"></ul>
+      <div class="history-tip" id="historyTip">Up to 20 recent searches are saved.</div>
+    </aside>
+
+    <section class="map-container" aria-label="Map">
+      <div class="map-frame-wrap">
+        <iframe
+          id="mapFrame"
+          title="Google Map"
+          loading="lazy"
+          referrerpolicy="no-referrer-when-downgrade"
+          allowfullscreen
+        ></iframe>
+      </div>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
