@@ -7,7 +7,7 @@ const historyList = $('#historyList');
 const clearHistoryBtn = $('#clearHistoryBtn');
 const modeToggle = $('#modeToggle');
 
-const STORAGE_KEYS = { HISTORY: 'map_history_v6', THEME: 'map_theme_v6' };
+const STORAGE_KEYS = { HISTORY: 'map_history_final', THEME: 'map_theme_final' };
 const MAX_HISTORY = 20;
 const DEFAULT_QUERY = 'USA';
 let currentQuery = DEFAULT_QUERY;
@@ -59,57 +59,41 @@ modeToggle.addEventListener('click',()=>setTheme(loadTheme()==='dark'?'light':'d
 
 // ------- Mobile swipe & drag for history panel -------
 (function mobileHistoryDrag() {
-  if (window.innerWidth > 900) return;
-
+  if(window.innerWidth > 900) return;
   const panel = document.querySelector('.history-panel');
   const list = document.querySelector('.history-list');
 
-  let startY = 0, startX = 0;
-  let isExpanded = false;
-  let isDragging = false;
-  let scrollLeft = 0, velocity = 0, lastTime = 0;
+  let startY=0, startX=0, isExpanded=false, isDragging=false, scrollLeft=0, velocity=0, lastTime=0;
 
   panel.addEventListener('touchstart', (e) => {
-    startY = e.touches[0].clientY;
-    startX = e.touches[0].clientX;
-
-    // For horizontal drag
-    isDragging = true;
-    scrollLeft = list.scrollLeft;
-    velocity = 0;
-    lastTime = e.timeStamp;
-  }, { passive: true });
+    startY=e.touches[0].clientY; startX=e.touches[0].clientX;
+    isDragging=true; scrollLeft=list.scrollLeft; velocity=0; lastTime=e.timeStamp;
+  }, {passive:true});
 
   panel.addEventListener('touchmove', (e) => {
-    const currentY = e.touches[0].clientY;
-    const currentX = e.touches[0].clientX;
-    const deltaY = currentY - startY;
-    const deltaX = currentX - startX;
+    const currentY=e.touches[0].clientY; const currentX=e.touches[0].clientX;
+    const deltaY=currentY-startY; const deltaX=currentX-startX;
 
-    // Vertical swipe: expand/collapse only if mostly vertical
-    if (Math.abs(deltaY) > Math.abs(deltaX)) {
-      if (deltaY < -20 && !isExpanded) { panel.classList.add('expanded'); isExpanded = true; }
-      if (deltaY > 20 && isExpanded) { panel.classList.remove('expanded'); isExpanded = false; }
+    // Vertical swipe
+    if(Math.abs(deltaY) > Math.abs(deltaX)){
+      if(deltaY < -20 && !isExpanded){ panel.classList.add('expanded'); isExpanded=true; }
+      if(deltaY > 20 && isExpanded){ panel.classList.remove('expanded'); isExpanded=false; }
     }
 
     // Horizontal drag
-    if (isDragging && Math.abs(deltaX) > Math.abs(deltaY)) {
-      const now = e.timeStamp;
-      const delta = startX - currentX;
-      velocity = delta / (now - lastTime);
-      lastTime = now;
-      list.scrollLeft = scrollLeft + delta;
+    if(isDragging && Math.abs(deltaX) > Math.abs(deltaY)){
+      const now=e.timeStamp; const delta=startX-currentX; velocity=delta/(now-lastTime); lastTime=now;
+      list.scrollLeft=scrollLeft+delta;
     }
-  }, { passive: true });
+  }, {passive:true});
 
   panel.addEventListener('touchend', () => {
-    isDragging = false;
-    // Inertia for horizontal scroll
-    const momentum = velocity * 200;
-    const target = list.scrollLeft + momentum;
-    const maxScroll = list.scrollWidth - list.clientWidth;
-    const finalScroll = Math.max(0, Math.min(target, maxScroll));
-    list.scrollTo({ left: finalScroll, behavior: 'smooth' });
+    isDragging=false;
+    const momentum=velocity*200;
+    const target=list.scrollLeft+momentum;
+    const maxScroll=list.scrollWidth-list.clientWidth;
+    const finalScroll=Math.max(0, Math.min(target, maxScroll));
+    list.scrollTo({ left: finalScroll, behavior:'smooth' });
   });
 })();
 
