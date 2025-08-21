@@ -7,7 +7,7 @@ const historyList = $('#historyList');
 const clearHistoryBtn = $('#clearHistoryBtn');
 const modeToggle = $('#modeToggle');
 
-const STORAGE_KEYS = { HISTORY: 'map_history_v5', THEME: 'map_theme_v5' };
+const STORAGE_KEYS = { HISTORY: 'map_history_v6', THEME: 'map_theme_v6' };
 const MAX_HISTORY = 20;
 const DEFAULT_QUERY = 'USA';
 let currentQuery = DEFAULT_QUERY;
@@ -59,41 +59,53 @@ modeToggle.addEventListener('click',()=>setTheme(loadTheme()==='dark'?'light':'d
 
 // ------- Mobile swipe & drag for history panel -------
 (function mobileHistoryDrag() {
-  if(window.innerWidth > 900) return;
+  if (window.innerWidth > 900) return;
 
   const panel = document.querySelector('.history-panel');
   const list = document.querySelector('.history-list');
 
-  // Swipe up/down to expand/collapse
-  let startY = 0, isExpanded = false;
-  panel.addEventListener('touchstart', (e) => { startY = e.touches[0].clientY; });
-  panel.addEventListener('touchmove', (e) => {
-    const deltaY = e.touches[0].clientY - startY;
-    if (deltaY < -20 && !isExpanded) { panel.classList.add('expanded'); isExpanded = true; }
-    if (deltaY > 20 && isExpanded) { panel.classList.remove('expanded'); isExpanded = false; }
-  });
+  let startY = 0, startX = 0;
+  let isExpanded = false;
+  let isDragging = false;
+  let scrollLeft = 0, velocity = 0, lastTime = 0;
 
-  // Drag-to-scroll with inertia
-  let isDragging = false, startX = 0, scrollLeft = 0, velocity = 0, lastTime = 0;
-  list.addEventListener('touchstart', (e) => {
+  panel.addEventListener('touchstart', (e) => {
+    startY = e.touches[0].clientY;
+    startX = e.touches[0].clientX;
+
+    // For horizontal drag
     isDragging = true;
-    startX = e.touches[0].pageX;
     scrollLeft = list.scrollLeft;
     velocity = 0;
     lastTime = e.timeStamp;
-  });
-  list.addEventListener('touchmove', (e) => {
-    if(!isDragging) return;
-    const x = e.touches[0].pageX;
-    const delta = startX - x;
-    const now = e.timeStamp;
-    velocity = delta / (now - lastTime);
-    lastTime = now;
-    list.scrollLeft = scrollLeft + delta;
-  });
-  list.addEventListener('touchend', () => {
+  }, { passive: true });
+
+  panel.addEventListener('touchmove', (e) => {
+    const currentY = e.touches[0].clientY;
+    const currentX = e.touches[0].clientX;
+    const deltaY = currentY - startY;
+    const deltaX = currentX - startX;
+
+    // Vertical swipe: expand/collapse only if mostly vertical
+    if (Math.abs(deltaY) > Math.abs(deltaX)) {
+      if (deltaY < -20 && !isExpanded) { panel.classList.add('expanded'); isExpanded = true; }
+      if (deltaY > 20 && isExpanded) { panel.classList.remove('expanded'); isExpanded = false; }
+    }
+
+    // Horizontal drag
+    if (isDragging && Math.abs(deltaX) > Math.abs(deltaY)) {
+      const now = e.timeStamp;
+      const delta = startX - currentX;
+      velocity = delta / (now - lastTime);
+      lastTime = now;
+      list.scrollLeft = scrollLeft + delta;
+    }
+  }, { passive: true });
+
+  panel.addEventListener('touchend', () => {
     isDragging = false;
-    let momentum = velocity * 200;
+    // Inertia for horizontal scroll
+    const momentum = velocity * 200;
     const target = list.scrollLeft + momentum;
     const maxScroll = list.scrollWidth - list.clientWidth;
     const finalScroll = Math.max(0, Math.min(target, maxScroll));
