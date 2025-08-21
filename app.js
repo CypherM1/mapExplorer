@@ -7,7 +7,7 @@ const historyList = $('#historyList');
 const clearHistoryBtn = $('#clearHistoryBtn');
 const modeToggle = $('#modeToggle');
 
-const STORAGE_KEYS = { HISTORY: 'map_history_v4', THEME: 'map_theme_v4' };
+const STORAGE_KEYS = { HISTORY: 'map_history_v5', THEME: 'map_theme_v5' };
 const MAX_HISTORY = 20;
 const DEFAULT_QUERY = 'USA';
 let currentQuery = DEFAULT_QUERY;
@@ -57,16 +57,47 @@ searchForm.addEventListener('submit',(e)=>{e.preventDefault(); setMapLocation(lo
 clearHistoryBtn.addEventListener('click',()=>clearHistory());
 modeToggle.addEventListener('click',()=>setTheme(loadTheme()==='dark'?'light':'dark'));
 
-// ------- Mobile swipe for history panel -------
-(function mobileSwipe(){
-  if(window.innerWidth>900) return;
-  const panel=document.querySelector('.history-panel');
-  let startY=0, isExpanded=false;
-  panel.addEventListener('touchstart',(e)=>{startY=e.touches[0].clientY;});
-  panel.addEventListener('touchmove',(e)=>{
-    const deltaY=e.touches[0].clientY-startY;
-    if(deltaY<-20 && !isExpanded){panel.classList.add('expanded'); isExpanded=true;}
-    if(deltaY>20 && isExpanded){panel.classList.remove('expanded'); isExpanded=false;}
+// ------- Mobile swipe & drag for history panel -------
+(function mobileHistoryDrag() {
+  if(window.innerWidth > 900) return;
+
+  const panel = document.querySelector('.history-panel');
+  const list = document.querySelector('.history-list');
+
+  // Swipe up/down to expand/collapse
+  let startY = 0, isExpanded = false;
+  panel.addEventListener('touchstart', (e) => { startY = e.touches[0].clientY; });
+  panel.addEventListener('touchmove', (e) => {
+    const deltaY = e.touches[0].clientY - startY;
+    if (deltaY < -20 && !isExpanded) { panel.classList.add('expanded'); isExpanded = true; }
+    if (deltaY > 20 && isExpanded) { panel.classList.remove('expanded'); isExpanded = false; }
+  });
+
+  // Drag-to-scroll with inertia
+  let isDragging = false, startX = 0, scrollLeft = 0, velocity = 0, lastTime = 0;
+  list.addEventListener('touchstart', (e) => {
+    isDragging = true;
+    startX = e.touches[0].pageX;
+    scrollLeft = list.scrollLeft;
+    velocity = 0;
+    lastTime = e.timeStamp;
+  });
+  list.addEventListener('touchmove', (e) => {
+    if(!isDragging) return;
+    const x = e.touches[0].pageX;
+    const delta = startX - x;
+    const now = e.timeStamp;
+    velocity = delta / (now - lastTime);
+    lastTime = now;
+    list.scrollLeft = scrollLeft + delta;
+  });
+  list.addEventListener('touchend', () => {
+    isDragging = false;
+    let momentum = velocity * 200;
+    const target = list.scrollLeft + momentum;
+    const maxScroll = list.scrollWidth - list.clientWidth;
+    const finalScroll = Math.max(0, Math.min(target, maxScroll));
+    list.scrollTo({ left: finalScroll, behavior: 'smooth' });
   });
 })();
 
